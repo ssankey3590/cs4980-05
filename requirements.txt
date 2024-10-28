@@ -1,0 +1,11 @@
+hydra-core
+mel_cepstral_distance
+numpy
+omegaconf
+pandas
+pesq
+scipy
+speechbrain
+torch
+torchaudio
+tqdm
