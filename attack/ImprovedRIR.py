@@ -6,15 +6,34 @@ from .attack import Attacker
 
 
 class ImprovedRIR(Attacker):
+    # Technical constants
+    EPSILON = 1e-10  # Small value for numerical stability
+    PENALTY_SCALING = 10  # Scaling factor for RIR loss
+    SAMPLE_RATE = 16000  # Audio sample rate in Hz
+
+    # Signal processing constants
+    MIN_SEGMENT_LENGTH = 1000  # Minimum length for valid segments
+    DEFAULT_OVERLAP = 100  # Default overlap size for concatenation
+
+    # Optimization constants
+    DEFAULT_LEARNING_RATE = 0.001
 
     def __init__(self, task, config) -> None:
         super(ImprovedRIR, self).__init__(task, config)
-        rir, _ = ta.load(config.rir_path)
-        rir = rir[0]
-        rir = rir / (torch.norm(rir, p=2) + 1e-10)
-        rir = rir[rir.argmax():rir.argmax() + self.config.rir_len]
-        self.rir = rir.flip(dims=(0,))
-        self.window = torch.hann_window(self.config.overlap * 2)
+        self._set_config_defaults()
+        self._initialize_rir()
+        self._initialize_window()
+
+    def _set_config_defaults(self):
+        """Set default values for config if not provided."""
+        defaults = {
+            'overlap': self.DEFAULT_OVERLAP,
+            'lr': self.DEFAULT_LEARNING_RATE,
+            'mode': 'global',
+        }
+        for key, default_value in defaults.items():
+            if not hasattr(self.config, key):
+                setattr(self.config, key, default_value)
 
     def initialize(self, wav, interval=None):
         assert interval is not None
@@ -89,7 +108,7 @@ class ImprovedRIR(Attacker):
             rir_loss /= len(self.perturb)
         else:
             rir_loss = F.mse_loss(self.rir, self.perturb, reduction='sum')
-        wav_loss = F.mse_loss(wav, wav_, reduction='sum') / wav.shape[-1] * 16000
+        wav_loss = F.mse_loss(wav, wav_, reduction='sum') / wav.shape[-1] * self.SAMPLE_RATE
         return wav_loss + 10 * rir_loss
 
     def __str__(self) -> str:
