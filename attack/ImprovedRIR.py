@@ -41,27 +41,18 @@ class ImprovedRIR(Attacker):
         return F.conv1d(seg.unsqueeze(0), rir.unsqueeze(0).unsqueeze(0))
 
     def concatenation(self, segs):
-        # Calculate total length first
-        total_length = sum(seg.shape[-1] - self.config.overlap for seg in segs[:-1]) + segs[-1].shape[-1]
-        # Pre-allocate output tensor
-        result = torch.zeros((segs[0].shape[0], segs[0].shape[1], total_length), device=segs[0].device)
-
-        current_pos = 0
-        for k in range(len(segs) - 1):
-            # Process overlap
-            overlap = segs[k][:, :, -self.config.overlap:] * self.window[self.config.overlap:] + \
-                      segs[k + 1][:, :, :self.config.overlap] * self.window[:self.config.overlap]
-
-            # Copy main segment
-            length = segs[k].shape[-1] - self.config.overlap
-            result[:, :, current_pos:current_pos + length] = segs[k][:, :, :length]
-            # Add overlap
-            result[:, :, current_pos + length:current_pos + length + self.config.overlap] = overlap
-            current_pos += length
-
-        # Handle last segment
-        result[:, :, current_pos:] = segs[-1][:, :, self.config.overlap:]
-        return result
+        # overlap-add concatenation
+        new_segs = []
+        for k in range(0, len(segs)-1):
+            segs[k][:, :, -self.config.overlap:] = segs[k][:, :, -self.config.overlap:] * self.window[self.config.overlap:] + \
+                                                    segs[k+1][:, :, :self.config.overlap] * self.window[:self.config.overlap]
+            new_segs.append(segs[k][:, :, self.config.overlap:])
+        new_segs.append(segs[-1][:, :, self.config.overlap:])
+        if new_segs[0].shape[-1] >= self.config.overlap:
+            new_segs[0][:, :, :self.config.overlap] *= self.window[:self.config.overlap]
+        if new_segs[-1].shape[-1] >= self.config.overlap:
+            new_segs[-1][:, :, -self.config.overlap:] *= self.window[self.config.overlap:]
+        return torch.concat(new_segs, dim=-1)
 
     def generate(self, wav):
         if self.config.mode == 'local':
