@@ -41,30 +41,26 @@ class ImprovedRIR(Attacker):
         return F.conv1d(seg.unsqueeze(0), rir.unsqueeze(0).unsqueeze(0))
 
     def concatenation(self, segs):
-        with torch.no_grad():  # If gradients aren't needed for this operation
-            total_length = sum(seg.shape[-1] - self.config.overlap for seg in segs[:-1]) + segs[-1].shape[-1]
-            result = torch.zeros((segs[0].shape[0], segs[0].shape[1], total_length), device=segs[0].device)
+        # Calculate total length first
+        total_length = sum(seg.shape[-1] - self.config.overlap for seg in segs[:-1]) + segs[-1].shape[-1]
+        # Pre-allocate output tensor
+        result = torch.zeros((segs[0].shape[0], segs[0].shape[1], total_length), device=segs[0].device)
 
-            current_pos = 0
-            for k in range(len(segs) - 1):
-                # In-place operations
-                overlap = torch.addcmul(
-                    segs[k + 1][:, :, :self.config.overlap] * self.window[:self.config.overlap],
-                    segs[k][:, :, -self.config.overlap:],
-                    self.window[self.config.overlap:],
-                    value=1
-                )
+        current_pos = 0
+        for k in range(len(segs) - 1):
+            # Process overlap
+            overlap = segs[k][:, :, -self.config.overlap:] * self.window[self.config.overlap:] + \
+                      segs[k + 1][:, :, :self.config.overlap] * self.window[:self.config.overlap]
 
-                result[:, :, current_pos:current_pos + segs[k].shape[-1] - self.config.overlap].copy_(
-                    segs[k][:, :, :-self.config.overlap]
-                )
-                result[:, :,
-                current_pos + segs[k].shape[-1] - self.config.overlap:current_pos + segs[k].shape[-1]].copy_(
-                    overlap
-                )
-                current_pos += segs[k].shape[-1] - self.config.overlap
+            # Copy main segment
+            length = segs[k].shape[-1] - self.config.overlap
+            result[:, :, current_pos:current_pos + length] = segs[k][:, :, :length]
+            # Add overlap
+            result[:, :, current_pos + length:current_pos + length + self.config.overlap] = overlap
+            current_pos += length
 
-            result[:, :, current_pos:].copy_(segs[-1][:, :, self.config.overlap:])
+        # Handle last segment
+        result[:, :, current_pos:] = segs[-1][:, :, self.config.overlap:]
         return result
 
     def generate(self, wav):
