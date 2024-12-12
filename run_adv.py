@@ -11,6 +11,7 @@ from speechbrain.nnet.losses import ctc_loss
 from speechbrain.utils.metric_stats import EER
 
 import utils
+from attack.ImprovedRIR import ImprovedRIR
 from dataset import WavDataset, MusicDataset
 from attack.rir import RIR
 from attack.pgd import PGD
@@ -70,6 +71,9 @@ def main(cfg: DictConfig) -> None:
     elif cfg.adv.name == 'rir': 
         cfg.adv.rir_path = os.path.join(cfg.root_dir, cfg.dataset.rir_template_dir, cfg.adv.rir_type + '.wav')
         attacker = RIR(cfg.task, cfg.adv)
+    elif cfg.adv.name == 'improved_rir':
+        cfg.adv.rir_path = os.path.join(cfg.root_dir, cfg.dataset.rir_template_dir, cfg.adv.rir_type + '.wav')
+        attacker = ImprovedRIR(cfg.task, cfg.adv)
     elif cfg.adv.name == 'kenku': 
         cfg.adv.tgt_wav_path = os.path.join(cfg.root_dir, cfg.dataset.kenku_tgt_wav_path)
         attacker = KENKU(cfg.task, cfg.adv)
