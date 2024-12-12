@@ -28,10 +28,10 @@ class ImprovedRIR(Attacker):
             self.optimizer = torch.optim.Adam([self.perturb], lr=self.config.lr)
         self.window = self.window.to(wav.device)
 
-    def normalize(self, x, vmin, vmax):
+    def _normalize(self, x, vmin, vmax):
         return (x - x.min()) / (x.max() - x.min()) * (vmax - vmin) + vmin
 
-    def convolution(self, wav, s, e, rir):
+    def _convolution(self, wav, s, e, rir):
         # phoneme-level convolution
         s -= self.config.rir_len - 1 + self.config.overlap
         if s < 0:
@@ -40,7 +40,7 @@ class ImprovedRIR(Attacker):
             seg = wav[:, s:e]
         return F.conv1d(seg.unsqueeze(0), rir.unsqueeze(0).unsqueeze(0))
 
-    def concatenation(self, segs):
+    def _concatenation(self, segs):
         # overlap-add concatenation
         new_segs = []
         for k in range(0, len(segs)-1):
@@ -54,24 +54,32 @@ class ImprovedRIR(Attacker):
             new_segs[-1][:, :, -self.config.overlap:] *= self.window[self.config.overlap:]
         return torch.concat(new_segs, dim=-1)
 
+    def _process_local_segment(self, wav, start, end, perturb):
+        return self._convolution(wav, start, end, perturb)
+
+    def _process_local_mode(self, wav):
+        wav_ = []
+        p = 0
+        for i, perturb_i in enumerate(self.perturb):
+            s, e = self.interval[i][0], self.interval[i][1]
+            if s > p:
+                wav_.append(self._convolution(wav, p, s, self.rir))
+            wav_.append(self._process_local_segment(wav, s, e, perturb_i))
+            p = e
+        if p < wav.shape[-1]:
+            wav_.append(self._convolution(wav, p, wav.shape[-1], self.rir))
+        return self._concatenation(wav_).squeeze(0)
+
+    def _process_global_mode(self, wav):
+        wav = F.pad(wav, (self.config.rir_len - 1, 0)).unsqueeze(0)
+        return F.conv1d(wav, self.perturb.unsqueeze(0).unsqueeze(0)).squeeze(0)
+
     def generate(self, wav):
         if self.config.mode == 'local':
-            wav_ = []
-            p = 0
-            for i, perturb_i in enumerate(self.perturb):
-                s, e = self.interval[i][0], self.interval[i][1]
-                if s > p:
-                    wav_.append(self.convolution(wav, p, s, self.rir))
-                wav_.append(self.convolution(wav, s, e, perturb_i))
-                p = e
-            if p < wav.shape[-1]:
-                wav_.append(self.convolution(wav, p, wav.shape[-1], self.rir))
-            wav_ = self.concatenation(wav_).squeeze(0)
+            wav_ = self._process_local_mode(wav)
         else:
-            wav = F.pad(wav, (self.config.rir_len - 1, 0)).unsqueeze(0)
-            wav_ = F.conv1d(wav, self.perturb.unsqueeze(0).unsqueeze(0)).squeeze(0)
-        wav_ = self.normalize(wav_, wav.min(), wav.max())
-        return wav_
+            wav_ = self._process_global_mode(wav)
+        return self._normalize(wav_, wav.min(), wav.max())
 
     def penalty(self, wav, wav_):
         if self.config.mode == 'local':
