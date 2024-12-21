@@ -5,7 +5,7 @@ This repo is for a class project in the course CS:4980:0005 Fall24 Topics in Com
 ### Changes to the AdvReverb Algorithm
 We have made several changes to the AdvReverb algorithm implementation to improve its effectiveness, stealthiness. Those changes are summarized below:
 
-1. Incorporation of Perceptual Loss Functions
+1. **Incorporation of Perceptual Loss Functions**
 Issue Addressed
 Auditory Perception Alignment: The original implementation used Mean Squared Error (MSE) loss, which does not adequately model human auditory perception.
 Solution
@@ -13,7 +13,7 @@ Perceptual Metric Usage: Integrated the Short-Time Objective Intelligibility (ST
 Benefits
 Improved Stealthiness: Aligns the optimization process with human auditory perception, making adversarial perturbations less perceptible.
 Quality Assurance: Enhances the naturalness of the adversarial examples by focusing on perceptual audio quality.
-2. Adaptive Penalty Weighting
+2. **Adaptive Penalty Weighting**
 Issue Addressed
 Fixed Penalty Limitations: Using fixed weights for penalty terms may not effectively balance attack success and audio quality throughout the optimization.
 Solution
@@ -23,7 +23,7 @@ Decreases weight when perceptual loss is low (audio difference is minimal).
 Benefits
 Balanced Optimization: Dynamically balances the importance of attacking effectiveness and audio imperceptibility.
 Customization: Allows for fine-tuning based on specific thresholds and weight factors defined in the configuration.
-3. Adaptive Learning Rate Scheduling
+3. **Adaptive Learning Rate Scheduling**
 Issue Addressed
 Optimization Efficiency: A fixed learning rate may lead to slow convergence or overshooting minima during optimization.
 Solution
@@ -33,7 +33,7 @@ Helps in fine-tuning the perturbations during later stages of optimization.
 Benefits
 Improved Convergence: Enhances the optimizer's ability to find a minimum efficiently.
 Stability: Prevents oscillations and promotes smoother convergence.
-4. Phoneme Importance Weighting
+4. **Phoneme Importance Weighting**
 Issue Addressed
 Uniform Perturbation Application: Treating all phonemes equally may not be optimal since some are more perceptible than others.
 Solution
@@ -43,17 +43,7 @@ More Perceptible Phonemes: Given lower weights (e.g., vowels and voiced consonan
 Benefits
 Targeted Perturbations: Focuses adversarial perturbations on less perceptible phonemes, reducing the likelihood of detection by human listeners.
 Enhanced Stealthiness: Improves the naturalness of the adversarial audio by minimizing alterations to perceptually significant phonemes.
-5. Adjustments for Compatibility with Python 3.9
-Issue Addressed
-Function Availability: Certain PyTorch functions used in the original code are not available in the version compatible with Python 3.9.
-Solution
-Code Modifications: Ensured all functions and methods used are compatible with Python 3.9:
-Replaced unavailable functions with compatible alternatives.
-Added small constants (e.g., 1e-10) to prevent division by zero.
-Benefits
-Execution Success: Allows the algorithm to run without errors in the specified environment.
-Broader Accessibility: Makes the code usable for users who are restricted to Python 3.9.
-6. Minor Code Enhancements
+5. **Minor Code Enhancements**
 Normalization Improvement
 Issue: Potential division by zero during normalization.
 Solution: Added a small constant (1e-10) in the normalize method denominator.
