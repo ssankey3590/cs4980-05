@@ -2,8 +2,8 @@
 This is a fork of the repository used in "AdvReverb: Rethinking the Stealthiness of Audio Adversarial Examples to Human Perception" by Chen, et al.
 This repo is for a class project in the course CS:4980:0005 Fall24 Topics in Computer Science II - Adversarial Machine Learning at The University of Iowa.
 
-### Summary of Changes to the AdvReverb Algorithm Implementation
-We have made several changes to the AdvReverb algorithm implementation to improve its effectiveness, stealthiness, and compatibility with Python 3.9. Below is a detailed summary of the modifications:
+### Changes to the AdvReverb Algorithm
+We have made several changes to the AdvReverb algorithm implementation to improve its effectiveness, stealthiness. Those changes are summarized below:
 
 1. Incorporation of Perceptual Loss Functions
 Issue Addressed
