@@ -3,13 +3,14 @@ This is a fork of the repository used in "AdvReverb: Rethinking the Stealthiness
 This repo is for a class project in the course CS:4980:0005 Fall24 Topics in Computer Science II - Adversarial Machine Learning at The University of Iowa.
 
 ### Changes to the AdvReverb Algorithm
-We have made several changes to the AdvReverb algorithm implementation to improve its effectiveness, stealthiness. Those changes are summarized below:
+We have made several changes to the AdvReverb algorithm implementation to improve its effectiveness and stealthiness. Those changes are summarized below:
 
 1. **Incorporation of Perceptual Loss Functions**
-   - Auditory Perception Alignment: The original implementation used Mean Squared Error (MSE) loss, which does not adequately model human auditory perception.
-   - Perceptual Metric Usage: Integrated the Short-Time Objective Intelligibility (STOI) metric as a perceptual loss function by adding a perceptual_loss method.
-   - Improved Stealthiness: Aligns the optimization process with human auditory perception, making adversarial perturbations less perceptible.
-   - Quality Assurance: Enhances the naturalness of the adversarial examples by focusing on perceptual audio quality.
+    - Issue
+      - Auditory Perception Alignment: The original implementation used Mean Squared Error (MSE) loss, which does not adequately model human auditory perception.
+      - Perceptual Metric Usage: Integrated the Short-Time Objective Intelligibility (STOI) metric as a perceptual loss function by adding a perceptual_loss method.
+      - Improved Stealthiness: Aligns the optimization process with human auditory perception, making adversarial perturbations less perceptible.
+      - Quality Assurance: Enhances the naturalness of the adversarial examples by focusing on perceptual audio quality.
 
 2. **Adaptive Penalty Weighting**
    - Fixed Penalty Limitations: Using fixed weights for penalty terms may not effectively balance attack success and audio quality throughout the optimization.
